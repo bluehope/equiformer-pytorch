@@ -1174,8 +1174,10 @@ class Equiformer(nn.Module):
         rel_pos  = rearrange(coors, 'b n d -> b n 1 d') - rearrange(coors, 'b n d -> b 1 n d')
         if self.use_pbc:
             frac_rel_pos = torch.matmul(rel_pos, torch.linalg.inv(lattice_vector))
+            
             rel_pos_pbc  = torch.matmul(frac_rel_pos - torch.round(frac_rel_pos), lattice_vector)
-
+            # print("ref pos orig", rel_pos)
+            # print("ref pos pbc", rel_pos_pbc)
             rel_pos = rel_pos_pbc
 
         indices = indices.masked_select(exclude_self_mask).reshape(b, n, n - 1)
