@@ -68,7 +68,7 @@ coors.retain_grad()
 mask  = torch.ones(1, N).bool().cuda()
 
 lattice = torch.tensor([[[10.0, 0, 0], [0, 10.0, 0], [0, 1, 10.0]]]).float().cuda()
-out = model_lattice(feats, coors, mask, lattice_vector=lattice) # (1, 128)
+out = model_lattice(feats, coors, mask, lattice_vectors=lattice) # (1, 128)
 
 print(out.type0.shape, out.type1.shape)
 
@@ -87,13 +87,13 @@ import ase
 import ase.atoms
 import numpy as np
 
-lattice_vector = torch.tensor([[[10.0, 0, 0], [10, 10.0, 0], [0, -10, 10.0]]]).float().cuda()
+lattice_vectors = torch.tensor([[[10.0, 0, 0], [10, 10.0, 0], [0, -10, 10.0]]]).float().cuda()
 
 atoms = ase.Atoms(positions=coors[0].cpu().detach().numpy(), symbols=feats[0].cpu().detach().numpy(),
-                  pbc=True, cell=lattice_vector[0].cpu().detach().numpy())
+                  pbc=True, cell=lattice_vectors[0].cpu().detach().numpy())
 
-position_frac = torch.matmul(coors, torch.linalg.inv(lattice_vector))
-position_cart = torch.matmul(position_frac, lattice_vector)
+position_frac = torch.matmul(coors, torch.linalg.inv(lattice_vectors))
+position_cart = torch.matmul(position_frac, lattice_vectors)
 
 max_diff_frac = np.max(np.abs(position_frac[0].cpu().detach().numpy() - atoms.get_scaled_positions()))
 
@@ -102,9 +102,9 @@ max_diff = torch.max(torch.abs(coors - position_cart))
 print("max_diff", max_diff.item(), max_diff_frac)
 
 rel_pos  = rearrange(coors, 'b n d -> b n 1 d') - rearrange(coors, 'b n d -> b 1 n d')
-frac_rel_pos = torch.matmul(rel_pos, torch.linalg.inv(lattice_vector))
+frac_rel_pos = torch.matmul(rel_pos, torch.linalg.inv(lattice_vectors))
 
-rel_pos_pbc  = torch.matmul(frac_rel_pos - torch.round(frac_rel_pos), lattice_vector)
+rel_pos_pbc  = torch.matmul(frac_rel_pos - torch.round(frac_rel_pos), lattice_vectors)
 print("ref pos orig", rel_pos)
 print("ref pos pbc", rel_pos_pbc)
 
