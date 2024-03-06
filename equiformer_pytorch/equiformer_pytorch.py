@@ -1173,9 +1173,10 @@ class Equiformer(nn.Module):
         indices = repeat(torch.arange(n, device = device), 'j -> b i j', b = b, i = n)
         rel_pos  = rearrange(coors, 'b n d -> b n 1 d') - rearrange(coors, 'b n d -> b 1 n d')
         if self.use_pbc: # apply PBC
-            frac_rel_pos = torch.matmul(rel_pos, torch.linalg.inv(lattice_vectors))
+            inv_lattice_vectors = torch.linalg.inv(lattice_vectors)
+            frac_rel_pos = torch.einsum('bijk,bkl->bijl', rel_pos, inv_lattice_vectors)
             frac_rel_pos_pbc = frac_rel_pos - torch.round(frac_rel_pos)
-            rel_pos_pbc  = torch.matmul(frac_rel_pos_pbc, lattice_vectors)
+            rel_pos_pbc  = torch.einsum('bijk,bkl->bijl', frac_rel_pos_pbc, lattice_vectors)
             rel_pos = rel_pos_pbc
 
         indices = indices.masked_select(exclude_self_mask).reshape(b, n, n - 1)
